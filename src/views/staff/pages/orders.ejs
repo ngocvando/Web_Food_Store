@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân Viên - Đơn Hàng</title>
+        <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/staff-sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <h2>📋 Quản Lý Đơn Hàng</h2>
+            <span class="order-count">Tổng: <strong><%= orders.length %></strong> đơn</span>
+        </div>
+
+        <div class="order-filters" style="padding:20px 30px 0;">
+            <button class="filter-btn active" data-filter="all">Tất cả</button>
+            <button class="filter-btn" data-filter="Pending">⏳ Chờ xác nhận</button>
+            <button class="filter-btn" data-filter="Preparing">🍳 Đang chế biến</button>
+            <button class="filter-btn" data-filter="Shipping">🚚 Đang giao</button>
+            <button class="filter-btn" data-filter="Completed">✅ Hoàn thành</button>
+            <button class="filter-btn" data-filter="Cancelled">❌ Đã hủy</button>
+        </div>
+
+        <div class="admin-card" style="margin:20px 30px 30px;">
+            <% if(orders.length === 0) { %>
+                <p style="color:#aaa;text-align:center;padding:40px;">Chưa có đơn hàng nào.</p>
+            <% } else { %>
+            <table class="admin-table" id="ordersTable">
+                <thead><tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Địa chỉ giao hàng</th>
+                    <th>Món đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Ghi chú</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật</th>
+                </tr></thead>
+                <tbody>
+                <% orders.forEach(order => { %>
+                <tr data-status="<%= order.order_status %>">
+                    <td>
+                        <strong>#<%= order.order_id %></strong><br>
+                        <small style="color:#999"><%= new Date(order.order_date).toLocaleDateString('vi-VN') %></small>
+                    </td>
+                    <td class="customer-cell">
+                        <span class="customer-name"><%= order.full_name %></span>
+                        <% if(order.receiver_name && order.receiver_name !== order.full_name) { %>
+                            <small style="color:#666">Người nhận: <%= order.receiver_name %></small>
+                        <% } %>
+                        <span class="customer-phone">📞 <%= order.delivery_phone || order.phone || '—' %></span>
+                    </td>
+                    <td style="max-width:200px;font-size:0.85rem;color:#444;">
+                        📍 <%= order.delivery_address || order.user_address || '—' %>
+                        <% if(order.payment_method) { %>
+                            <br><small style="color:#888">💳 <%= order.payment_method === 'Banking' ? 'VietQR Banking' : 'COD' %></small>
+                            <% if(order.payment_method === 'Banking') { %>
+                                <br><small style="color:#666">Mã CK: <strong><%= order.payment_reference || ('COMQUE DH ' + order.order_id) %></strong></small>
+                                <br><small class="payment-status payment-<%= (order.payment_status || '').toLowerCase() %>"><%= order.payment_status === 'Paid' ? '✅ Đã thanh toán' : '⏳ Chờ xác nhận tiền' %></small>
+                                <% if(order.payment_status !== 'Paid' && order.order_status !== 'Cancelled') { %>
+                                    <br><button type="button" class="confirm-payment-btn" data-id="<%= order.order_id %>">Xác nhận tiền</button>
+                                <% } %>
+                            <% } %>
+                        <% } %>
+                    </td>
+                    <td class="order-items-cell">
+                        <% if(order.items && order.items.length > 0) { %>
+                            <div class="order-items-summary">
+                                <strong><%= order.items.length %></strong> món trong đơn
+                            </div>
+                            <div class="order-items-list <%= order.items.length > 3 ? 'is-collapsed' : '' %>">
+                                <% order.items.forEach(item => { %>
+                                    <div class="order-item-row">
+                                        <img src="/images/<%= item.image_url || 'default-food.png' %>" onerror="this.src='/images/default-food.png'" alt="">
+                                        <div class="order-item-info">
+                                            <div class="order-item-name"><%= item.dish_name || item.combo_name || item.item_name || 'Món ăn' %></div>
+                                            <div class="order-item-meta">x<%= item.quantity %><% if(item.price_at_time){ %> — <%= Number(item.price_at_time).toLocaleString('vi-VN') %>₫<% } %></div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                            <% if(order.items.length > 3) { %>
+                                <button type="button" class="order-items-toggle" aria-expanded="false">
+                                    <span class="toggle-icon">⌄</span>
+                                    <span class="toggle-text">Xem tất cả <%= order.items.length %> món</span>
+                                </button>
+                            <% } %>
+                        <% } else { %>
+                            <span style="color:#aaa;">—</span>
+                        <% } %>
+                    </td>
+                    <td class="price-cell"><%= Number(order.total_amount).toLocaleString('vi-VN') %> ₫</td>
+                    <td><i style="color:#888;font-size:0.88rem;"><%= order.note || '—' %></i></td>
+                    <td>
+                        <span class="status-badge status-<%= order.order_status.toLowerCase() %>">
+                            <% const lbl={Pending:'⏳ Chờ xác nhận',Preparing:'🍳 Chế biến',Shipping:'🚚 Đang giao',Completed:'✅ Hoàn thành',Cancelled:'❌ Đã hủy'} %>
+                            <%= lbl[order.order_status] %>
+                        </span>
+                    </td>
+                    <td>
+                        <select class="status-select" data-id="<%= order.order_id %>" data-current="<%= order.order_status %>" <%= (order.order_status === 'Completed' || order.order_status === 'Cancelled') ? 'disabled' : '' %>>
+                            <option value="Pending"   <%= order.order_status=='Pending'   ?'selected':'' %>>Chờ xác nhận</option>
+                            <option value="Preparing" <%= order.order_status=='Preparing' ?'selected':'' %>>Đang chế biến</option>
+                            <option value="Shipping"  <%= order.order_status=='Shipping'  ?'selected':'' %>>Đang giao</option>
+                            <option value="Completed" <%= order.order_status=='Completed' ?'selected':'' %>>Hoàn thành</option>
+                            <option value="Cancelled" <%= order.order_status=='Cancelled' ?'selected':'' %>>Hủy đơn</option>
+                        </select>
+                    </td>
+                </tr>
+                <% }) %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+<script>
+document.querySelectorAll('.status-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const orderId = this.dataset.id, newStatus = this.value;
+        fetch('/staff/orders/update-status', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({orderId, status: newStatus})
+        }).then(r=>r.json()).then(data => {
+            if(data.success) {
+                const row = this.closest('tr');
+                row.dataset.status = newStatus;
+                const badge = row.querySelector('.status-badge');
+                const labels = {Pending:'⏳ Chờ xác nhận',Preparing:'🍳 Chế biến',Shipping:'🚚 Đang giao',Completed:'✅ Hoàn thành',Cancelled:'❌ Đã hủy'};
+                badge.textContent = labels[newStatus];
+                badge.className = `status-badge status-${newStatus.toLowerCase()}`;
+                this.dataset.current = newStatus;
+                if (newStatus === 'Completed' || newStatus === 'Cancelled') this.disabled = true;
+                showToast(`Đã cập nhật #${orderId} → ${labels[newStatus]}`);
+            }
+        });
+    });
+});
+document.querySelectorAll('.confirm-payment-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const orderId = this.dataset.id;
+        if (!confirm(`Xác nhận đã nhận tiền chuyển khoản cho đơn #${orderId}?`)) return;
+        fetch('/staff/orders/confirm-payment', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ orderId })
+        }).then(r=>r.json()).then(data => {
+            if(!data.success) return alert(data.message || 'Không thể xác nhận thanh toán');
+            showToast(`Đã xác nhận thanh toán đơn #${orderId}`);
+            setTimeout(() => location.reload(), 500);
+        });
+    });
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+        this.classList.add('active');
+        const filter = this.dataset.filter;
+        document.querySelectorAll('#ordersTable tbody tr').forEach(row => {
+            row.style.display = (filter==='all' || row.dataset.status===filter) ? '' : 'none';
+        });
+    });
+});
+function initOrderItemToggles() {
+    document.querySelectorAll('.order-items-toggle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const list = this.previousElementSibling;
+            const expanded = this.getAttribute('aria-expanded') === 'true';
+            list.classList.toggle('is-collapsed', expanded);
+            this.setAttribute('aria-expanded', String(!expanded));
+            this.querySelector('.toggle-icon').textContent = expanded ? '⌄' : '⌃';
+            const countText = this.dataset.countText || this.querySelector('.toggle-text').textContent;
+            if (!this.dataset.countText) this.dataset.countText = countText;
+            this.querySelector('.toggle-text').textContent = expanded ? countText : 'Thu gọn danh sách món';
+        });
+    });
+}
+initOrderItemToggles();
+
+function showToast(msg) {
+    const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+    document.body.appendChild(t); setTimeout(()=>t.classList.add('show'),10);
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3000);
+}
+</script>
+    </body>
+</html>

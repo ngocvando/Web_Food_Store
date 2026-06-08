@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cơm Quê - Hương Vị Truyền Thống</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+
+<body>
+    <%- include('../../partials/navbar') %>
+
+        <!-- ===== NEW FOOD SALE BANNER / HERO ===== -->
+        <section class="cq-hero-sale">
+            <div class="cq-hero-shell">
+                <div class="cq-hero-slider" id="cqHeroSlider">
+                    <article class="cq-hero-slide active">
+                        <div class="cq-hero-bg"
+                            style="background-image:url('<%= settings && settings.home_banner_image ? settings.home_banner_image : '/images/comque-sale-banner.jpg' %>')">
+                        </div>
+                        <div class="cq-hero-overlay"></div>
+                        <div class="cq-hero-content">
+                            <span class="cq-kicker">Cơm Quê ưu đãi hôm nay</span>
+                            <h1>Đậm vị cơm nhà<br><strong>giảm đến 20%</strong></h1>
+                            <p>Món Việt nóng hổi, combo tiết kiệm, đặt nhanh và giao tận nơi.</p>
+                            <div class="cq-hero-actions">
+                                <a href="/thuc-don" class="cq-btn cq-btn-primary">Đặt món ngay</a>
+                                <a href="#combo-deals" class="cq-btn cq-btn-light">Xem combo</a>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="cq-hero-slide">
+                        <div class="cq-hero-bg cq-hero-gradient-1"></div>
+                        <div class="cq-hero-content dark">
+                            <span class="cq-kicker">Combo văn phòng</span>
+                            <h1>Bữa trưa đủ đầy<br><strong>giá tốt hơn mua lẻ</strong></h1>
+                            <p>Cơm tấm, phở bò, nước giải khát và món tráng miệng cho ngày làm việc năng lượng.</p>
+                            <div class="cq-hero-actions">
+                                <a href="#combo-deals" class="cq-btn cq-btn-primary">Chọn combo</a>
+                                <a href="/thuc-don" class="cq-btn cq-btn-outline-dark">Xem thực đơn</a>
+                            </div>
+                        </div>
+                        <div class="cq-hero-food-art"><img src="/images/banner-combo.jpg" alt="Combo"></div>
+                    </article>
+                    <article class="cq-hero-slide">
+                        <div class="cq-hero-bg cq-hero-gradient-2"></div>
+                        <div class="cq-hero-content dark">
+                            <span class="cq-kicker">Giao món nhanh</span>
+                            <h1>Món ngon đến nhà<br><strong>nóng hổi mỗi ngày</strong></h1>
+                            <p>Chọn món, áp mã giảm giá và theo dõi đơn hàng dễ dàng trên website Cơm Quê.</p>
+                            <div class="cq-hero-actions">
+                                <a href="/thuc-don" class="cq-btn cq-btn-primary">Khám phá món ngon</a>
+                            </div>
+                        </div>
+                        <div class="cq-hero-food-art"><img src="/images/banner-delivery.jpg" alt="Phở"></div>
+                    </article>
+                </div>
+                <button class="cq-hero-nav prev" type="button" onclick="moveCqHero(-1)"
+                    aria-label="Banner trước">‹</button>
+                <button class="cq-hero-nav next" type="button" onclick="moveCqHero(1)"
+                    aria-label="Banner sau">›</button>
+                <div class="cq-hero-dots" id="cqHeroDots"></div>
+            </div>
+        </section>
+
+        <!-- ===== QUICK CATEGORIES ===== -->
+        <section class="cq-section compact">
+            <div class="container">
+                <div class="cq-section-title inline-title">
+                    <div>
+                        <span>Khám phá nhanh</span>
+                        <h2>Danh mục nổi bật</h2>
+                    </div>
+                    <a href="/thuc-don" class="cq-text-link">Xem tất cả →</a>
+                </div>
+                <div class="cq-category-strip">
+                    <a href="/thuc-don" class="cq-category-chip active">
+                        <span>🍽️</span>
+                        <strong>Tất cả món</strong>
+                        <small>
+                            <%= dishes.length %> món
+                        </small>
+                    </a>
+                    <% categories.forEach((cat, idx)=> {
+                        const icons = ['🍜','🍚','🥗','🍲','🧃','🍰','🥘','🍤'];
+                        const icon = icons[idx % icons.length];
+                        %>
+                        <a href="/thuc-don?cat=<%= encodeURIComponent(cat.category_name) %>" class="cq-category-chip">
+                            <span>
+                                <%= icon %>
+                            </span>
+                            <strong>
+                                <%= cat.category_name %>
+                            </strong>
+                            <small>
+                                <%= cat.dish_count %> món
+                            </small>
+                        </a>
+                        <% }) %>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== FEATURE STRIP ===== -->
+        <section class="cq-feature-strip">
+            <div class="container">
+                <div class="cq-feature-grid">
+                    <div class="cq-mini-feature"><span>🌿</span><strong>Nguyên liệu tươi</strong><small>Chọn lọc mỗi
+                            ngày</small></div>
+                    <div class="cq-mini-feature"><span>🍲</span><strong>Chuẩn vị Việt</strong><small>Đậm đà vị
+                            quê</small></div>
+                    <div class="cq-mini-feature"><span>⚡</span><strong>Đặt món nhanh</strong><small>Thao tác đơn
+                            giản</small></div>
+                    <div class="cq-mini-feature"><span>🎁</span><strong>Ưu đãi combo</strong><small>Tiết kiệm
+                            hơn</small></div>
+                </div>
+            </div>
+        </section>
+
+        <% if (combos && combos.length> 0) { %>
+            <!-- ===== COMBO DEALS ===== -->
+            <section class="cq-section" id="combo-deals">
+                <div class="container">
+                    <div class="cq-section-title">
+                        <span>Tiết kiệm hơn</span>
+                        <h2>Combo Ưu Đãi</h2>
+                        <p>Các gói món ăn kết hợp với giá tốt hơn khi mua lẻ.</p>
+                    </div>
+                    <div class="menu-grid cq-menu-grid-3">
+                        <% combos.slice(0, 6).forEach(combo=> { %>
+                            <div class="food-card cq-product-card" data-category="Combo Tiết Kiệm">
+                                <div class="food-img-wrap">
+                                    <img src="/images/<%= combo.image_url || 'default-food.png' %>"
+                                        alt="<%= combo.combo_name %>" class="food-image"
+                                        onerror="this.src='/images/default-food.png'">
+                                    <span class="food-badge-cat">Combo</span>
+                                </div>
+                                <div class="food-info">
+                                    <h3 class="food-name">
+                                        <%= combo.combo_name %>
+                                    </h3>
+                                    <p class="food-desc">
+                                        <%= combo.description || combo.items_text || '' %>
+                                    </p>
+                                    <div class="food-footer">
+                                        <span class="food-price">
+                                            <%= Number(combo.discount_price).toLocaleString('vi-VN') %> ₫
+                                        </span>
+                                        <button class="btn-add-sm"
+                                            onclick="addComboToCart(event, '<%= combo.combo_id %>', '<%= combo.combo_name %>')">+
+                                            Combo</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                    </div>
+                </div>
+            </section>
+            <% } %>
+
+                <!-- ===== POPULAR DISHES ===== -->
+                <section class="cq-section cq-popular-section">
+                    <div class="container">
+                        <div class="cq-section-title">
+                            <span>Được yêu thích</span>
+                            <h2>Món Nổi Bật Tuần Này</h2>
+                            <p>Những món ăn được khách hàng đặt nhiều nhất, đảm bảo chuẩn vị và chất lượng.</p>
+                        </div>
+
+                        <div class="home-cat-tabs cq-tabs">
+                            <button class="home-cat-tab active" onclick="filterHomeMenu('all', this)">Tất cả</button>
+                            <% categories.forEach(cat=> { %>
+                                <button class="home-cat-tab" onclick="filterHomeMenu('<%= cat.category_name %>', this)">
+                                    <%= cat.category_name %>
+                                </button>
+                                <% }) %>
+                        </div>
+
+                        <div class="menu-grid cq-menu-grid-3" id="homeMenuGrid">
+                            <% dishes.slice(0, 12).forEach(dish=> { %>
+                                <div class="food-card cq-product-card" data-category="<%= dish.category_name %>">
+                                    <div class="food-img-wrap">
+                                        <a href="/mon-an/<%= dish.dish_id %>" class="food-image-link"><img
+                                                src="/images/<%= dish.image_url || 'default-food.png' %>"
+                                                alt="<%= dish.dish_name %>" class="food-image"
+                                                onerror="this.src='/images/default-food.png'"></a>
+                                        <span class="food-badge-cat">
+                                            <%= dish.category_name %>
+                                        </span>
+                                    </div>
+                                    <div class="food-info">
+                                        <h3 class="food-name"><a href="/mon-an/<%= dish.dish_id %>">
+                                                <%= dish.dish_name %>
+                                            </a></h3>
+                                        <p class="food-desc">
+                                            <%= dish.description ? dish.description.substring(0,70) +
+                                                (dish.description.length> 70 ? '...' : '') : '' %>
+                                        </p>
+                                        <div class="food-footer">
+                                            <span class="food-price">
+                                                <%= Number(dish.price).toLocaleString('vi-VN') %> ₫
+                                            </span>
+                                            <button class="btn-add-sm"
+                                                onclick="addToCart(event, '<%= dish.dish_id %>', '<%= dish.dish_name %>', '<%= dish.price %>', '<%= dish.image_url || 'default-food.png' %>')">+
+                                                Thêm</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+                        </div>
+
+                        <div class="cq-center-action">
+                            <a href="/thuc-don" class="cq-btn cq-btn-primary">Xem tất cả món ăn →</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== ABOUT ===== -->
+                <section class="cq-story-section">
+                    <div class="container">
+                        <div class="cq-story-card">
+                            <div class="cq-story-left">
+                                <span class="cq-kicker dark-text">Câu chuyện Cơm Quê</span>
+                                <h2>Giữ vị thân quen trong từng bữa ăn</h2>
+                                <p>Cơm Quê mang đến những bữa cơm Việt gần gũi, ấm áp và đủ đầy. Mỗi món ăn được chuẩn
+                                    bị từ nguyên liệu tươi ngon, giữ trọn hương vị quê nhà.</p>
+                                <div class="cq-story-list">
+                                    <span>✓ Nguyên liệu tươi sạch</span>
+                                    <span>✓ Công thức đậm vị Việt</span>
+                                    <span>✓ Combo tiện lợi mỗi ngày</span>
+                                </div>
+                            </div>
+                            <div class="cq-story-right">
+                                <div class="cq-story-stat"><strong>10+</strong><span>Năm kinh nghiệm</span></div>
+                                <div class="cq-story-stat"><strong>30 phút</strong><span>Hỗ trợ giao món</span></div>
+                                <div class="cq-story-stat"><strong>4.8★</strong><span>Đánh giá trung bình</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== TESTIMONIALS ===== -->
+                <section class="cq-section testimonials-section">
+                    <div class="container">
+                        <div class="cq-section-title">
+                            <span>Khách hàng nói gì</span>
+                            <h2>Đánh Giá Từ Thực Khách</h2>
+                        </div>
+
+                        <% if (typeof customerReviews !=='undefined' && customerReviews && customerReviews.length> 0) {
+                            %>
+                            <div class="testimonials-grid cq-testimonials-grid">
+                                <% customerReviews.forEach(review=> {
+                                    const rating = Number(review.rating || 0);
+                                    const stars = '★'.repeat(Math.max(0, Math.min(5, rating))) + '☆'.repeat(Math.max(0,
+                                    5 - Math.min(5, rating)));
+                                    const displayName = review.customer_name || 'Khách hàng';
+                                    const initial = displayName.trim().charAt(0).toUpperCase() || 'K';
+                                    %>
+                                    <div class="testimonial-card cq-review-card">
+                                        <div class="testimonial-stars">
+                                            <%= stars %>
+                                        </div>
+                                        <p>"<%= review.comment %>"</p>
+                                        <div class="testimonial-author">
+                                            <div class="testimonial-avatar">
+                                                <%= initial %>
+                                            </div>
+                                            <div>
+                                                <strong>
+                                                    <%= displayName %>
+                                                </strong>
+                                                <small>Đã đánh giá: <%= review.item_name || 'Đơn hàng Cơm Quê' %>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                            </div>
+                            <% } else { %>
+                                <div class="empty-review-box">
+                                    <p>Hiện tại chưa có đánh giá nào từ khách hàng.</p>
+                                    <a href="/thuc-don" class="btn-outline">Đặt món để trải nghiệm</a>
+                                </div>
+                                <% } %>
+                    </div>
+                </section>
+
+
+                <%- include('../../partials/footer') %>
+
+                    <script>
+                        function filterHomeMenu(cat, btn) {
+                            document.querySelectorAll('.home-cat-tab').forEach(b => b.classList.remove('active'));
+                            if (btn) btn.classList.add('active');
+                            document.querySelectorAll('#homeMenuGrid .food-card').forEach(card => {
+                                card.style.display = (cat === 'all' || card.dataset.category === cat) ? '' : 'none';
+                            });
+                        }
+
+                        let cqHeroIndex = 0;
+                        function renderCqHero() {
+                            const slides = document.querySelectorAll('.cq-hero-slide');
+                            const dots = document.querySelectorAll('.cq-hero-dot');
+                            slides.forEach((slide, idx) => slide.classList.toggle('active', idx === cqHeroIndex));
+                            dots.forEach((dot, idx) => dot.classList.toggle('active', idx === cqHeroIndex));
+                        }
+                        function moveCqHero(step) {
+                            const slides = document.querySelectorAll('.cq-hero-slide');
+                            if (!slides.length) return;
+                            cqHeroIndex = (cqHeroIndex + step + slides.length) % slides.length;
+                            renderCqHero();
+                        }
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const slides = document.querySelectorAll('.cq-hero-slide');
+                            const dotWrap = document.getElementById('cqHeroDots');
+                            if (dotWrap) {
+                                dotWrap.innerHTML = Array.from(slides).map((_, idx) => `<button type="button" class="cq-hero-dot ${idx === 0 ? 'active' : ''}" onclick="cqHeroIndex=${idx};renderCqHero()" aria-label="Chọn banner ${idx + 1}"></button>`).join('');
+                            }
+                            setInterval(() => moveCqHero(1), 6000);
+                        });
+                    </script>
+                    <script src="/js/cart.js"></script>
+</body>
+
+</html>

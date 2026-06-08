@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Voucher</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+    <style>
+        .voucher-grid{display:grid;grid-template-columns:420px 1fr;gap:24px;margin:30px;}
+        .voucher-form .form-group{margin-bottom:14px;}
+        .voucher-form label{display:block;font-weight:700;margin-bottom:7px;}
+        .voucher-form input,.voucher-form select{width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:.95rem;}
+        .voucher-badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-weight:800;font-size:.78rem;}
+        .voucher-active{background:#d9f3e1;color:#0b7a2a;}.voucher-off{background:#ffe0e0;color:#c0392b;}
+        .voucher-type{background:#e6e0f5;color:#3b2380;}.voucher-money{font-weight:800;color:#5645d4;}
+        .inline-edit{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:8px;margin-top:10px;}
+        .inline-edit input,.inline-edit select{padding:8px;border:1px solid #ddd;border-radius:8px;}
+        .btn-small{display:inline-block;padding:8px 12px;border-radius:8px;border:none;font-weight:700;text-decoration:none;cursor:pointer;}
+        .btn-save{background:#5645d4;color:#fff;}.btn-toggle{background:#f6f5f4;color:#333;}
+        @media(max-width:1100px){.voucher-grid{grid-template-columns:1fr;margin:16px;}.admin-table{min-width:920px;}.table-wrap{overflow-x:auto;}}
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/admin-sidebar', { page: 'vouchers' }) %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <h2>🎟️ Quản Lý Voucher</h2>
+            <span style="color:#888"><%= vouchers.length %> mã giảm giá</span>
+        </div>
+
+        <% if(query && query.saved) { %><div class="alert-success" style="margin:0 30px 10px;">✅ Đã thêm voucher thành công.</div><% } %>
+        <% if(query && query.updated) { %><div class="alert-success" style="margin:0 30px 10px;">✅ Đã cập nhật voucher.</div><% } %>
+        <% if(query && query.error) { %><div class="checkout-alert danger" style="margin:0 30px 10px;">❌ Không thể lưu voucher. Vui lòng kiểm tra mã trùng hoặc dữ liệu không hợp lệ.</div><% } %>
+
+        <div class="voucher-grid">
+            <div class="admin-card">
+                <h3 style="margin-bottom:16px;">➕ Thêm voucher mới</h3>
+                <form action="/admin/vouchers/add" method="POST" class="voucher-form" data-validate-form="voucher">
+                    <div class="form-group"><label>Mã voucher</label><input name="code" placeholder="VD: COMQUE10, GIAM20K, FREESHIP" required minlength="3" maxlength="30" pattern="^[A-Za-z0-9_-]{3,30}$" data-voucher="true" data-error="Mã voucher 3-30 ký tự, chỉ gồm chữ, số, _ hoặc -." ></div>
+                    <div class="form-group"><label>Mô tả</label><input name="description" maxlength="255" data-trim="true" placeholder="VD: Giảm 10% cho đơn từ 100.000đ"></div>
+                    <div class="form-group"><label>Loại voucher</label><select name="discount_type" id="newVoucherType" onchange="updateVoucherTypeHint(this.value)">
+                        <option value="fixed">Giảm tiền cố định</option>
+                        <option value="percent">Giảm theo phần trăm</option>
+                        <option value="freeship">Freeship / Giảm phí ship</option>
+                    </select>
+                    <small id="voucherTypeHint" style="color:#777;line-height:1.5;display:block;margin-top:6px;">Giảm trực tiếp trên tiền món.</small></div>
+                    <div class="form-group"><label>Giá trị giảm</label><input type="number" name="discount_value" min="0" value="0" required data-nonnegative="true" placeholder="VD: 20000, 10, hoặc 0 nếu freeship toàn bộ"></div>
+                    <div class="form-group"><label>Đơn tối thiểu</label><input type="number" name="min_order_amount" min="0" value="0" data-nonnegative="true"></div>
+                    <div class="form-group"><label>Giảm tối đa (chỉ cần với %)</label><input type="number" name="max_discount_amount" min="0" value="0" data-nonnegative="true"></div>
+                    <div class="form-group"><label>Số lượt dùng (0 = không giới hạn)</label><input type="number" name="usage_limit" min="0" value="0" data-nonnegative="true"></div>
+                    <div class="form-group"><label>Ngày bắt đầu</label><input type="datetime-local" name="start_date"></div>
+                    <div class="form-group"><label>Ngày kết thúc</label><input type="datetime-local" name="end_date"></div>
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;"><input type="checkbox" name="is_active" value="1" checked style="width:auto;"> Đang hoạt động</label>
+                    <button class="btn-admin-save" type="submit">💾 Lưu voucher</button>
+                </form>
+            </div>
+
+            <div class="admin-card table-wrap">
+                <h3 style="margin-bottom:16px;">📋 Danh sách voucher</h3>
+                <table class="admin-table">
+                    <thead><tr><th>Mã</th><th>Mô tả</th><th>Loại</th><th>Giá trị</th><th>Điều kiện</th><th>Lượt dùng</th><th>Thời hạn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                    <tbody>
+                    <% vouchers.forEach(v => { %>
+                        <tr>
+                            <td><strong><%= v.code %></strong></td>
+                            <td style="min-width:180px;"><%= v.description || '—' %></td>
+                            <td><span class="voucher-badge voucher-type"><%= v.discount_type === 'percent' ? 'Giảm %' : (v.discount_type === 'freeship' ? 'Freeship' : 'Giảm tiền') %></span></td>
+                            <td class="voucher-money"><%= v.discount_type === 'percent' ? Number(v.discount_value).toLocaleString('vi-VN') + '%' : (v.discount_type === 'freeship' ? (Number(v.discount_value || 0) > 0 ? 'Tối đa ' + Number(v.discount_value).toLocaleString('vi-VN') + 'đ' : 'Toàn bộ phí ship') : Number(v.discount_value).toLocaleString('vi-VN') + 'đ') %></td>
+                            <td>Đơn từ <strong><%= Number(v.min_order_amount || 0).toLocaleString('vi-VN') %>đ</strong><br><small>Tối đa: <%= Number(v.max_discount_amount || 0).toLocaleString('vi-VN') %>đ</small></td>
+                            <td><%= Number(v.used_count || 0) %>/<%= Number(v.usage_limit || 0) === 0 ? '∞' : Number(v.usage_limit) %></td>
+                            <td style="font-size:.82rem;color:#666;">Từ: <%= v.start_date ? new Date(v.start_date).toLocaleDateString('vi-VN') : '—' %><br>Đến: <%= v.end_date ? new Date(v.end_date).toLocaleDateString('vi-VN') : '—' %></td>
+                            <td><span class="voucher-badge <%= Number(v.is_active) === 1 ? 'voucher-active' : 'voucher-off' %>"><%= Number(v.is_active) === 1 ? 'Đang bật' : 'Đã tắt' %></span></td>
+                            <td style="min-width:260px;">
+                                <form action="/admin/vouchers/toggle/<%= v.discount_id %>" method="POST" style="display:inline;">
+                                    <button class="btn-small btn-toggle" type="submit"><%= Number(v.is_active) === 1 ? 'Tắt' : 'Bật' %></button>
+                                </form>
+                                <form action="/admin/vouchers/delete/<%= v.discount_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Xóa voucher <%= v.code %>? Voucher sẽ được ẩn khỏi danh sách nhưng lịch sử đơn hàng vẫn giữ.')">
+                                    <button class="btn-small btn-toggle" type="submit" style="background:#ffe0e0;color:#c0392b;">Xóa</button>
+                                </form>
+                                <details style="margin-top:8px;"><summary style="cursor:pointer;color:#5645d4;font-weight:700;">Sửa nhanh</summary>
+                                    <form action="/admin/vouchers/update/<%= v.discount_id %>" method="POST" class="inline-edit" data-validate-form="voucher-edit">
+                                        <input name="description" maxlength="255" data-trim="true" value="<%= v.description || '' %>" placeholder="Mô tả">
+                                        <select name="discount_type"><option value="fixed" <%= v.discount_type==='fixed'?'selected':'' %>>Giảm tiền</option><option value="percent" <%= v.discount_type==='percent'?'selected':'' %>>Giảm %</option><option value="freeship" <%= v.discount_type==='freeship'?'selected':'' %>>Freeship</option></select>
+                                        <input type="number" name="discount_value" min="0" data-nonnegative="true" value="<%= Number(v.discount_value || 0) %>" placeholder="Giá trị">
+                                        <input type="number" name="min_order_amount" min="0" data-nonnegative="true" value="<%= Number(v.min_order_amount || 0) %>" placeholder="Đơn tối thiểu">
+                                        <input type="number" name="max_discount_amount" min="0" data-nonnegative="true" value="<%= Number(v.max_discount_amount || 0) %>" placeholder="Giảm tối đa">
+                                        <input type="number" name="usage_limit" min="0" data-nonnegative="true" value="<%= Number(v.usage_limit || 0) %>" placeholder="Lượt dùng">
+                                        <input type="datetime-local" name="start_date" value="<%= v.start_date ? new Date(v.start_date).toISOString().slice(0,16) : '' %>">
+                                        <input type="datetime-local" name="end_date" value="<%= v.end_date ? new Date(v.end_date).toISOString().slice(0,16) : '' %>">
+                                        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" name="is_active" value="1" <%= Number(v.is_active)===1?'checked':'' %>> Bật</label>
+                                        <button class="btn-small btn-save" type="submit">Lưu</button>
+                                    </form>
+                                </details>
+                            </td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+function updateVoucherTypeHint(type){
+    const hint = document.getElementById('voucherTypeHint');
+    if(!hint) return;
+    if(type === 'percent') hint.textContent = 'Giảm theo % trên tiền món. Nên nhập thêm Giảm tối đa.';
+    else if(type === 'freeship') hint.textContent = 'Chỉ giảm vào phí giao hàng. Nhập 0 để miễn toàn bộ phí ship, hoặc nhập số tiền tối đa được giảm.';
+    else hint.textContent = 'Giảm trực tiếp trên tiền món.';
+}
+document.addEventListener('DOMContentLoaded',()=>updateVoucherTypeHint(document.getElementById('newVoucherType')?.value));
+</script>
+</body>
+</html>

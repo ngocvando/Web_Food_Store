@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý combo - Admin</title>
+        <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/admin-sidebar') %>
+    <main class="admin-main">
+        <div class="admin-header">
+            <h1>🎁 Quản lý Combo</h1>
+            <p>Tạo combo từ nhiều món ăn và bán với giá ưu đãi.</p>
+        </div>
+
+        <div class="admin-card" style="margin-bottom:24px;">
+            <h3>Thêm combo mới</h3>
+            <form action="/admin/combos/add" method="POST" enctype="multipart/form-data" style="display:grid;gap:14px;margin-top:16px;">
+                <div class="form-group">
+                    <label>Tên combo</label>
+                    <input type="text" name="combo_name" required placeholder="VD: Combo Trưa Văn Phòng">
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea name="description" rows="2" placeholder="Mô tả ngắn về combo"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Giá ưu đãi</label>
+                    <input type="number" name="discount_price" min="0" required placeholder="VD: 80000">
+                </div>
+                <div class="form-group">
+                    <label>Ảnh combo</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Chọn món trong combo</label>
+                    <div id="comboItems" style="display:grid;gap:10px;">
+                        <div style="display:grid;grid-template-columns:1fr 120px 42px;gap:10px;align-items:center;">
+                            <select name="dish_ids" required>
+                                <option value="">-- Chọn món --</option>
+                                <% dishes.forEach(d => { %>
+                                    <option value="<%= d.dish_id %>"><%= d.dish_name %> - <%= Number(d.price).toLocaleString('vi-VN') %> ₫</option>
+                                <% }) %>
+                            </select>
+                            <input type="number" name="quantities" value="1" min="1" required>
+                            <button type="button" onclick="removeComboRow(this)" class="btn-remove">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addComboRow()" class="btn-outline" style="margin-top:10px;">+ Thêm món vào combo</button>
+                </div>
+                <button type="submit" class="btn-primary">Lưu combo</button>
+            </form>
+        </div>
+
+        <div class="admin-card">
+            <h3>Danh sách combo</h3>
+            <table class="admin-table" style="margin-top:16px;">
+                <thead>
+                    <tr>
+                        <th>Ảnh</th>
+                        <th>Tên combo</th>
+                        <th>Món trong combo</th>
+                        <th>Giá gốc</th>
+                        <th>Giá bán</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% combos.forEach(combo => { %>
+                    <tr>
+                        <td><img src="/images/<%= combo.image_url || 'default-food.png' %>" onerror="this.src='/images/default-food.png'" style="width:56px;height:56px;object-fit:cover;border-radius:8px;"></td>
+                        <td><strong><%= combo.combo_name %></strong><br><small><%= combo.description || '' %></small></td>
+                        <td>
+                            <% combo.items.forEach(i => { %>
+                                <div><%= i.dish_name %> x<%= i.quantity %></div>
+                            <% }) %>
+                        </td>
+                        <td><%= Number(combo.original_price || 0).toLocaleString('vi-VN') %> ₫</td>
+                        <td style="font-weight:700;color:#E8192C;"><%= Number(combo.discount_price).toLocaleString('vi-VN') %> ₫</td>
+                        <td><%= combo.is_available ? 'Đang bán' : 'Ngừng bán' %></td>
+                        <td><a href="/admin/combos/delete/<%= combo.combo_id %>" onclick="return confirm('Ẩn combo này?')" class="btn-remove">Xóa</a></td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script>
+const dishOptions = `<option value="">-- Chọn món --</option><% dishes.forEach(d => { %><option value="<%= d.dish_id %>"><%= d.dish_name %> - <%= Number(d.price).toLocaleString('vi-VN') %> ₫</option><% }) %>`;
+function addComboRow() {
+    const wrap = document.getElementById('comboItems');
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 120px 42px;gap:10px;align-items:center;';
+    row.innerHTML = `<select name="dish_ids" required>${dishOptions}</select><input type="number" name="quantities" value="1" min="1" required><button type="button" onclick="removeComboRow(this)" class="btn-remove">✕</button>`;
+    wrap.appendChild(row);
+}
+function removeComboRow(btn) {
+    const wrap = document.getElementById('comboItems');
+    if (wrap.children.length > 1) btn.parentElement.remove();
+}
+</script>
+    </body>
+</html>

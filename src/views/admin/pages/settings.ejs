@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài Đặt - Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+    <style>
+        .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 30px 30px;}
+        .qr-help{color:#777;font-size:.86rem;line-height:1.6;margin-top:6px;}
+        .qr-preview-img{width:220px;max-width:100%;border-radius:14px;border:2px solid #e0e0e0;padding:10px;background:#fff;}
+        .qr-error{display:none;margin:12px auto 0;max-width:360px;padding:12px;border-radius:10px;background:#fff1f2;color:#c0392b;font-size:.9rem;line-height:1.5;}
+        .qr-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px;}
+        .qr-test-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;background:#000;color:#fff;text-decoration:none;font-weight:700;border:0;cursor:pointer;}
+        @media(max-width: 1000px){.settings-grid{grid-template-columns:1fr;padding:0 16px 24px;}}
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/admin-sidebar', { page: 'settings' }) %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <h2>⚙️ Cài Đặt Hệ Thống</h2>
+        </div>
+
+        <% if(typeof query !== 'undefined' && query && query.saved) { %>
+            <div class="alert-success" style="margin:0 30px 10px;">✅ Đã lưu cài đặt thành công!</div>
+        <% } %>
+
+        <div class="settings-grid">
+            <div class="admin-card">
+                <h3 style="margin-bottom:20px;">🏦 Thông Tin Thanh Toán VietQR</h3>
+                <form action="/admin/settings" method="POST" class="admin-form" id="qrSettingsForm">
+                    <div class="form-group">
+                        <label>Tên ngân hàng hiển thị</label>
+                        <input id="qrBankName" type="text" name="qr_bank_name" value="<%= settings.qr_bank_name || 'MB Bank' %>" placeholder="VD: MB Bank">
+                        <p class="qr-help">Tên này chỉ dùng để hiển thị cho khách hàng.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mã ngân hàng VietQR / BIN</label>
+                        <% const currentCode = (settings.qr_bank_code || settings.qr_bank || 'MB').toString().trim().toUpperCase(); %>
+                        <select id="qrBankCodeSelect" onchange="document.getElementById('qrBankCode').value=this.value;updateVietQrPreview();">
+                            <option value="MB" <%= ['MB','MBBANK','MB BANK'].includes(currentCode) ? 'selected' : '' %>>MB - MB Bank</option>
+                            <option value="VCB" <%= currentCode === 'VCB' ? 'selected' : '' %>>VCB - Vietcombank</option>
+                            <option value="TCB" <%= currentCode === 'TCB' ? 'selected' : '' %>>TCB - Techcombank</option>
+                            <option value="BIDV" <%= currentCode === 'BIDV' ? 'selected' : '' %>>BIDV - BIDV</option>
+                            <option value="ICB" <%= currentCode === 'ICB' ? 'selected' : '' %>>ICB - VietinBank</option>
+                            <option value="VBA" <%= currentCode === 'VBA' ? 'selected' : '' %>>VBA - Agribank</option>
+                            <option value="ACB" <%= currentCode === 'ACB' ? 'selected' : '' %>>ACB - ACB</option>
+                            <option value="VPB" <%= currentCode === 'VPB' ? 'selected' : '' %>>VPB - VPBank</option>
+                            <option value="TPB" <%= currentCode === 'TPB' ? 'selected' : '' %>>TPB - TPBank</option>
+                            <option value="STB" <%= currentCode === 'STB' ? 'selected' : '' %>>STB - Sacombank</option>
+                        </select>
+                        <input id="qrBankCode" type="text" name="qr_bank_code" value="<%= ['MBBANK','MB BANK'].includes(currentCode) ? 'MB' : currentCode %>" placeholder="VD: MB hoặc 970422" oninput="updateVietQrPreview()" style="margin-top:10px;">
+                        <p class="qr-help">Không nhập tên hiển thị như <b>MBBank</b>. Hãy dùng mã VietQR như <b>MB</b>, <b>VCB</b>, <b>TCB</b> hoặc BIN ngân hàng.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số tài khoản nhận tiền</label>
+                        <input id="qrAccount" type="text" name="qr_account" value="<%= settings.qr_account || '' %>" placeholder="VD: 0002046973782" oninput="updateVietQrPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tên chủ tài khoản</label>
+                        <input id="qrName" type="text" name="qr_name" value="<%= settings.qr_name || '' %>" placeholder="VD: DO VAN NGOC" oninput="updateVietQrPreview()">
+                        <p class="qr-help">Nên nhập đúng tên chủ tài khoản, viết IN HOA không dấu để khách dễ đối chiếu.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mẫu VietQR</label>
+                        <select id="qrTemplate" name="qr_template" onchange="updateVietQrPreview()">
+                            <% const tpl = settings.qr_template || 'compact2'; %>
+                            <option value="compact2" <%= tpl === 'compact2' ? 'selected' : '' %>>compact2 - Có logo + thông tin</option>
+                            <option value="compact" <%= tpl === 'compact' ? 'selected' : '' %>>compact - Gọn</option>
+                            <option value="qr_only" <%= tpl === 'qr_only' ? 'selected' : '' %>>qr_only - Chỉ QR</option>
+                        </select>
+                    </div>
+
+                    <div style="padding:12px 14px;background:#fff8e1;border-radius:10px;color:#8a5a00;font-size:.9rem;line-height:1.6;margin-bottom:16px;">
+                        💡 Đã bỏ upload ảnh QR tĩnh. Hệ thống sẽ tạo VietQR động theo từng đơn hàng, đúng số tiền và đúng nội dung chuyển khoản.
+                    </div>
+
+
+                    <hr style="border:0;border-top:1px solid #eee;margin:22px 0;">
+                    <h3 style="margin-bottom:16px;">🚚 Cài Đặt Phí Ship Kiểu GrabFood</h3>
+                    <div class="form-group">
+                        <label>Địa chỉ cửa hàng</label>
+                        <input type="text" name="shop_address" value="<%= settings.shop_address || 'Cơm Quê, Hưng Yên' %>" placeholder="VD: Cơm Quê, Hưng Yên">
+                    </div>
+                    <div class="form-group">
+                        <label>Ảnh banner trang chủ</label>
+                        <input type="text" name="home_banner_image" value="<%= settings.home_banner_image || '/images/comque-sale-banner.jpg' %>" placeholder="VD: /images/comque-sale-banner.jpg">
+                        <p class="qr-help">Đổi ảnh banner bằng cách copy ảnh vào <b>src/public/images</b>, rồi nhập đường dẫn dạng <b>/images/ten-anh.jpg</b>. Ảnh nên có kích thước khoảng 1200x400 hoặc 1400x450.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Tọa độ cửa hàng - Latitude</label>
+                        <input type="number" step="0.0000001" name="shop_lat" value="<%= settings.shop_lat || '20.64637' %>">
+                    </div>
+                    <div class="form-group">
+                        <label>Tọa độ cửa hàng - Longitude</label>
+                        <input type="number" step="0.0000001" name="shop_lng" value="<%= settings.shop_lng || '106.05112' %>">
+                        <p class="qr-help">Hệ thống dùng tọa độ cửa hàng và tọa độ địa chỉ khách để tính khoảng cách.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Google Maps API Key</label>
+                        <input type="text" name="google_maps_api_key" value="<%= settings.google_maps_api_key || '' %>" placeholder="Dán API key Google Maps tại đây">
+                        <p class="qr-help">Dùng cho gợi ý địa chỉ Google Places và tính khoảng cách đường đi. Nếu bỏ trống, hệ thống sẽ dùng tìm kiếm địa chỉ dự phòng.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Phí cơ bản cho các km đầu</label>
+                        <input type="number" name="shipping_base_fee" min="0" value="<%= settings.shipping_base_fee || settings.shipping_fee || 15000 %>" placeholder="VD: 15000">
+                    </div>
+                    <div class="form-group">
+                        <label>Số km đầu áp dụng phí cơ bản</label>
+                        <input type="number" step="0.1" name="shipping_base_km" min="0.1" value="<%= settings.shipping_base_km || 3 %>" placeholder="VD: 3">
+                    </div>
+                    <div class="form-group">
+                        <label>Phí cộng thêm mỗi km phát sinh</label>
+                        <input type="number" name="shipping_per_km" min="0" value="<%= settings.shipping_per_km || 3000 %>" placeholder="VD: 3000">
+                    </div>
+                    <div class="form-group">
+                        <label>Khoảng cách giao tối đa</label>
+                        <input type="number" step="0.1" name="shipping_max_km" min="0" value="<%= settings.shipping_max_km || 20 %>" placeholder="VD: 20">
+                        <p class="qr-help">Nếu khách ở xa hơn mức này, hệ thống sẽ chặn đặt hàng.</p>
+                    </div>
+
+                    <button type="submit" class="btn-admin-save">💾 Lưu Cài Đặt</button>
+                </form>
+            </div>
+
+            <div class="admin-card">
+                <h3 style="margin-bottom:20px;">👁️ Xem Trước Mã QR</h3>
+                <div style="text-align:center;">
+                    <img id="qrPreview" class="qr-preview-img" alt="QR VietQR" onerror="showQrError()" onload="hideQrError()">
+                    <div id="qrError" class="qr-error">Không tải được QR. Vui lòng kiểm tra lại mã ngân hàng VietQR/BIN và số tài khoản.</div>
+                    <p style="color:#888;font-size:0.85rem;margin-top:12px;">QR xem trước dùng số tiền test 1.000đ và nội dung COMQUE TEST.</p>
+                    <div class="qr-actions">
+                        <button type="button" class="qr-test-btn" onclick="openVietQrTest()">🔎 Kiểm tra QR</button>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px;padding:16px;background:#f8f9fa;border-radius:10px;">
+                    <h4 style="margin-bottom:10px;color:#333;">📋 Thông tin hiện tại</h4>
+                    <div class="qr-detail"><span>Ngân hàng:</span><strong id="infoBankName"><%= settings.qr_bank_name || 'MB Bank' %></strong></div>
+                    <div class="qr-detail"><span>Mã VietQR:</span><strong id="infoBankCode"><%= ['MBBANK','MB BANK'].includes(currentCode) ? 'MB' : currentCode %></strong></div>
+                    <div class="qr-detail"><span>Số TK:</span><strong id="infoAccount"><%= settings.qr_account || '—' %></strong></div>
+                    <div class="qr-detail"><span>Chủ TK:</span><strong id="infoName"><%= settings.qr_name || '—' %></strong></div>
+                    <div class="qr-detail"><span>Template:</span><strong id="infoTemplate"><%= settings.qr_template || 'compact2' %></strong></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+function normalizeBankCode(code) {
+    const value = (code || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    const map = { 'MBBANK': 'MB', 'MB BANK': 'MB', 'MILITARY BANK': 'MB', 'VIETCOMBANK': 'VCB', 'TECHCOMBANK': 'TCB', 'VIETINBANK': 'ICB', 'AGRIBANK': 'VBA', 'VPBANK': 'VPB', 'TPBANK': 'TPB', 'SACOMBANK': 'STB' };
+    return map[value] || value;
+}
+function buildVietQrUrl() {
+    const bank = normalizeBankCode(document.getElementById('qrBankCode').value || 'MB');
+    const account = (document.getElementById('qrAccount').value || '').replace(/\s+/g, '');
+    const template = document.getElementById('qrTemplate').value || 'compact2';
+    const name = document.getElementById('qrName').value || 'COM QUE';
+    if (!bank || !account) return '';
+    const url = new URL(`https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(account)}-${encodeURIComponent(template)}.png`);
+    url.searchParams.set('amount', '1000');
+    url.searchParams.set('addInfo', 'COMQUE TEST');
+    url.searchParams.set('accountName', name);
+    return url.toString();
+}
+function updateVietQrPreview() {
+    const bank = normalizeBankCode(document.getElementById('qrBankCode').value || 'MB');
+    document.getElementById('qrBankCode').value = bank;
+    document.getElementById('infoBankName').innerText = document.getElementById('qrBankName').value || '—';
+    document.getElementById('infoBankCode').innerText = bank || '—';
+    document.getElementById('infoAccount').innerText = document.getElementById('qrAccount').value || '—';
+    document.getElementById('infoName').innerText = document.getElementById('qrName').value || '—';
+    document.getElementById('infoTemplate').innerText = document.getElementById('qrTemplate').value || 'compact2';
+    const url = buildVietQrUrl();
+    const img = document.getElementById('qrPreview');
+    if (url) { img.style.display = 'inline-block'; img.src = url; } else { img.removeAttribute('src'); }
+}
+function openVietQrTest() {
+    const url = buildVietQrUrl();
+    if (!url) return alert('Vui lòng nhập mã ngân hàng và số tài khoản trước khi kiểm tra QR.');
+    window.open(url, '_blank');
+}
+function showQrError(){ document.getElementById('qrError').style.display = 'block'; }
+function hideQrError(){ document.getElementById('qrError').style.display = 'none'; }
+document.addEventListener('DOMContentLoaded', updateVietQrPreview);
+</script>
+</body>
+</html>
