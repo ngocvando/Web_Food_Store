@@ -4,7 +4,7 @@ Website đặt món ăn trực tuyến được xây dựng bằng **NodeJS (Exp
 
 ---
 
-# 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy Toàn Bộ (Chi Tiết)
+# 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy Toàn Bộ 
 
 Để hệ thống hoạt động chính xác, vui lòng thực hiện tuần tự các bước sau.
 
@@ -275,67 +275,6 @@ Khách hàng tự đăng ký tài khoản trên hệ thống.
 * Cập nhật trạng thái giao hàng
 
 ---
-
-# 🎫 Hệ Thống Voucher
-
-Hỗ trợ 3 loại voucher:
-
-### FIXED
-
-Giảm trực tiếp số tiền.
-
-Ví dụ:
-
-```text
-GIAM20000
-```
-
-Giảm:
-
-```text
-20.000đ
-```
-
----
-
-### PERCENT
-
-Giảm theo phần trăm.
-
-Ví dụ:
-
-```text
-GIAM10
-```
-
-Giảm:
-
-```text
-10%
-```
-
----
-
-### FREESHIP
-
-Chỉ giảm phí vận chuyển.
-
----
-
-# 💳 Thanh Toán
-
-## COD
-
-Thanh toán khi nhận hàng.
-
-## VietQR
-
-Khách hàng chuyển khoản:
-
-
----
-
-
 ---
 
 # 🛠️ Công Nghệ Sử Dụng
