@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+<%- include('../../partials/navbar') %>
+
+<main class="dish-detail-page">
+    <section class="dish-detail-shell">
+        <div class="dish-breadcrumb">
+            <a href="/">Cơm Quê</a>
+            <span>›</span>
+            <a href="/thuc-don">Thực đơn</a>
+            <span>›</span>
+            <span><%= dish.dish_name %></span>
+        </div>
+
+        <div class="dish-detail-card">
+            <div class="dish-gallery">
+                <div class="dish-main-image">
+                    <img id="mainDishImage" src="/images/<%= gallery[0] %>" alt="<%= dish.dish_name %>" onerror="this.src='/images/default-food.png'">
+                </div>
+                <div class="dish-thumbs">
+                    <% gallery.forEach((img, idx) => { %>
+                        <button type="button" class="dish-thumb <%= idx === 0 ? 'active' : '' %>" onclick="changeDishImage(this, '/images/<%= img %>')">
+                            <img src="/images/<%= img %>" alt="Ảnh <%= idx + 1 %> - <%= dish.dish_name %>" onerror="this.src='/images/default-food.png'">
+                        </button>
+                    <% }) %>
+                </div>
+            </div>
+
+            <div class="dish-detail-info">
+                <span class="food-badge-cat"><%= dish.category_name %></span>
+                <h1><%= dish.dish_name %></h1>
+                <div class="dish-rating-line">
+                    <% const avg = Number(ratingStats.avg_rating || 0); const full = Math.round(avg); %>
+                    <span class="detail-stars"><%= '★'.repeat(Math.max(0, Math.min(5, full))) %><%= '☆'.repeat(Math.max(0, 5 - Math.min(5, full))) %></span>
+                    <small><%= avg ? avg.toFixed(1) : 'Chưa có' %> / 5 · <%= ratingStats.total_reviews || 0 %> đánh giá</small>
+                </div>
+                <p class="dish-detail-desc"><%= dish.description || 'Món ăn được chuẩn bị nóng hổi mỗi ngày tại Cơm Quê.' %></p>
+                <div class="dish-price-box">
+                    <span>Giá bán</span>
+                    <strong><%= Number(dish.price).toLocaleString('vi-VN') %> ₫</strong>
+                </div>
+
+                <div class="dish-quantity-row">
+                    <label>Số lượng</label>
+                    <div class="qty-stepper">
+                        <button type="button" onclick="changeDetailQty(-1)">−</button>
+                        <input id="detailQty" type="number" min="1" value="1">
+                        <button type="button" onclick="changeDetailQty(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="dish-actions">
+                    <button class="cq-btn cq-btn-primary" onclick="addDetailDishToCart(event)">🛒 Thêm vào giỏ</button>
+                    <a href="/checkout" class="cq-btn cq-btn-outline-dark">Thanh toán</a>
+                </div>
+
+                <div class="dish-service-list">
+                    <div><span>🍱</span><b>Đóng gói sạch</b><small>Giữ món gọn gàng khi giao</small></div>
+                    <div><span>🔥</span><b>Món nóng mỗi ngày</b><small>Chuẩn bị sau khi nhận đơn</small></div>
+                    <div><span>🎁</span><b>Có thể áp mã giảm</b><small>Áp dụng ở giỏ hàng</small></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="dish-tabs-shell">
+        <div class="dish-tabs">
+            <button class="active" onclick="showDishTab('desc', this)">Mô tả</button>
+            <button onclick="showDishTab('reviews', this)">Đánh giá</button>
+        </div>
+        <div class="dish-tab-panel active" id="tab-desc">
+            <h2>Thông tin món ăn</h2>
+            <p><%= dish.description || 'Món ăn được chế biến theo phong cách Cơm Quê, phù hợp cho bữa ăn hằng ngày.' %></p>
+            <ul>
+                <li>Phù hợp cho bữa trưa, bữa tối hoặc đặt món văn phòng.</li>
+                <li>Nguyên liệu được chuẩn bị trong ngày.</li>
+                <li>Giá đã được lưu snapshot khi khách đặt hàng để đảm bảo hóa đơn chính xác.</li>
+            </ul>
+        </div>
+        <div class="dish-tab-panel" id="tab-reviews">
+            <h2>Đánh giá của khách hàng</h2>
+            <% if (reviews && reviews.length > 0) { %>
+                <div class="detail-review-list">
+                    <% reviews.forEach(r => { const rr = Number(r.rating || 0); %>
+                        <div class="detail-review-item">
+                            <div class="detail-review-head">
+                                <b><%= r.customer_name %></b>
+                                <span><%= '★'.repeat(Math.max(0, Math.min(5, rr))) %><%= '☆'.repeat(Math.max(0, 5 - Math.min(5, rr))) %></span>
+                            </div>
+                            <p><%= r.comment %></p>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="empty-review-box">Hiện tại món này chưa có đánh giá nào từ khách hàng.</div>
+            <% } %>
+        </div>
+    </section>
+
+    <% if (relatedDishes && relatedDishes.length > 0) { %>
+    <section class="cq-section related-dishes-section">
+        <div class="container">
+            <div class="cq-section-title">
+                <span>Gợi ý thêm</span>
+                <h2>Món ăn cùng danh mục</h2>
+            </div>
+            <div class="menu-grid cq-menu-grid-3 related-detail-grid">
+                <% relatedDishes.forEach(item => { %>
+                    <a class="food-card cq-product-card related-link-card" href="/mon-an/<%= item.dish_id %>">
+                        <div class="food-img-wrap">
+                            <img src="/images/<%= item.image_url || 'default-food.png' %>" alt="<%= item.dish_name %>" class="food-image" onerror="this.src='/images/default-food.png'">
+                            <span class="food-badge-cat"><%= item.category_name %></span>
+                        </div>
+                        <div class="food-info">
+                            <h3 class="food-name"><%= item.dish_name %></h3>
+                            <p class="food-desc"><%= item.description ? item.description.substring(0, 70) : '' %></p>
+                            <div class="food-footer">
+                                <span class="food-price"><%= Number(item.price).toLocaleString('vi-VN') %> ₫</span>
+                                <span class="btn-add-sm">Xem chi tiết</span>
+                            </div>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+        </div>
+    </section>
+    <% } %>
+</main>
+
+<%- include('../../partials/footer') %>
+<script src="/js/cart.js"></script>
+<script>
+function changeDishImage(btn, src) {
+    document.getElementById('mainDishImage').src = src;
+    document.querySelectorAll('.dish-thumb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function showDishTab(tab, btn) {
+    document.querySelectorAll('.dish-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.dish-tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+function changeDetailQty(delta) {
+    const input = document.getElementById('detailQty');
+    const next = Math.max(1, Number(input.value || 1) + delta);
+    input.value = next;
+}
+function addDetailDishToCart(event) {
+    const qty = Math.max(1, Number(document.getElementById('detailQty').value || 1));
+    for (let i = 0; i < qty; i++) {
+        addToCart(event, '<%= dish.dish_id %>', '<%= dish.dish_name %>', '<%= dish.price %>', '<%= dish.image_url || 'default-food.png' %>');
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Hàng Thành Công - Cơm Quê</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+    <%- include('../../partials/navbar') %>
+    <div class="success-page">
+        <div class="success-icon">✅</div>
+        <h1>Đặt Hàng Thành Công!</h1>
+        <p>Cảm ơn bạn đã tin tưởng Cơm Quê. Đơn hàng <strong>#<%= orderId %></strong> đang được xử lý và sẽ giao đến bạn sớm nhất.</p>
+
+        <% if(order && order.payment_method === 'Banking') { %>
+            <div class="admin-card vietqr-success-card" style="max-width:860px;margin:24px auto;text-align:left;">
+                <h3 style="margin-bottom:14px;">🏦 Thanh toán chuyển khoản VietQR</h3>
+                <div class="qr-container">
+                    <div class="qr-info">
+                        <div class="qr-detail"><span>Số tiền:</span><strong style="color:#E8192C;"><%= Number(order.total_amount || 0).toLocaleString('vi-VN') %> ₫</strong></div>
+                        <div class="qr-detail"><span>Nội dung CK:</span><strong style="color:#E8192C;"><%= order.payment_reference %></strong></div>
+                        <div class="qr-detail"><span>Trạng thái:</span><strong><%= order.payment_status === 'Paid' ? 'Đã thanh toán' : 'Chờ nhân viên xác nhận' %></strong></div>
+                        <p class="qr-note">Vui lòng chuyển khoản đúng <strong>số tiền</strong> và đúng <strong>nội dung chuyển khoản</strong> để nhân viên đối soát nhanh.</p>
+                    </div>
+                    <div class="qr-img-wrap">
+                        <% if(vietqrUrl) { %>
+                            <img src="<%= vietqrUrl %>" alt="QR VietQR đơn hàng #<%= orderId %>" class="qr-image" onerror="this.style.display='none';document.getElementById('vietqr-error').style.display='flex'">
+                        <% } %>
+                        <div id="vietqr-error" style="display:<%= vietqrUrl ? 'none' : 'flex' %>;width:260px;height:260px;background:#f0f0f0;border-radius:16px;align-items:center;justify-content:center;flex-direction:column;gap:6px;">
+                            <span style="font-size:2rem;">📱</span>
+                            <small style="color:#888;font-size:0.75rem;text-align:center;">Không tải được<br>mã VietQR</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+            <a href="/my-orders" class="btn-primary">Theo Dõi Đơn Hàng</a>
+            <a href="/order/<%= orderId %>/invoice" class="btn-outline" target="_blank">📄 Xem hóa đơn</a>
+            <a href="/thuc-don" class="btn-outline">← Tiếp tục mua</a>
+        </div>
+    </div>
+    <%- include('../../partials/footer') %>
+</body>
+</html>

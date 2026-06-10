@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân Viên - Thực Đơn</title>
+        <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/staff-sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <h2>🍽️ Thực Đơn</h2>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <input type="text" id="searchInput" placeholder="🔍 Tìm món ăn..." oninput="filterDishes()" style="padding:8px 14px;border:1.5px solid #e0e0e0;border-radius:8px;outline:none;">
+            </div>
+        </div>
+
+        <!-- Category tabs -->
+        <div class="order-filters" style="padding:16px 30px 0;flex-wrap:wrap;">
+            <button class="filter-btn active" onclick="filterCategory('all', this)">Tất cả (<%= dishes.length %>)</button>
+            <% categories.forEach(cat => {
+                const count = dishes.filter(d => d.category_id === cat.category_id).length;
+            %>
+                <button class="filter-btn" onclick="filterCategory('<%= cat.category_name %>', this)">
+                    <%= cat.category_name %> (<%= count %>)
+                </button>
+            <% }) %>
+        </div>
+
+        <div class="admin-card" style="margin:20px 30px 30px;">
+            <table class="admin-table" id="menuTable">
+                <thead><tr>
+                    <th>Hình ảnh</th>
+                    <th>Tên món</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Mô tả</th>
+                    <th>Trạng thái</th>
+                </tr></thead>
+                <tbody>
+                <% dishes.forEach(dish => { %>
+                <tr data-category="<%= dish.category_name %>" data-name="<%= dish.dish_name.toLowerCase() %>">
+                    <td><img src="/images/<%= dish.image_url %>" class="dish-thumb" onerror="this.src='/images/default-food.png'"></td>
+                    <td class="dish-name-cell">
+                        <strong><%= dish.dish_name %></strong>
+                    </td>
+                    <td><span class="food-category"><%= dish.category_name %></span></td>
+                    <td class="price-cell"><strong style="color:#E8192C"><%= Number(dish.price).toLocaleString('vi-VN') %> ₫</strong></td>
+                    <td style="max-width:220px;color:#666;font-size:0.87rem;"><%= dish.description || '—' %></td>
+                    <td>
+                        <% if(dish.is_available) { %>
+                            <span class="status-badge status-completed">✅ Đang bán</span>
+                        <% } else { %>
+                            <span class="status-badge status-cancelled">⏸️ Tạm ngưng</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script>
+let currentCat = 'all';
+function filterCategory(cat, btn) {
+    currentCat = cat;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    filterDishes();
+}
+function filterDishes() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#menuTable tbody tr').forEach(row => {
+        const matchCat = currentCat === 'all' || row.dataset.category === currentCat;
+        const matchQ = !q || row.dataset.name.includes(q);
+        row.style.display = (matchCat && matchQ) ? '' : 'none';
+    });
+}
+</script>
+    </body>
+</html>

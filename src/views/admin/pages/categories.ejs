@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Mục Món Ăn</title>
+        <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/admin-sidebar', { page: 'categories' }) %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <h2>📂 Quản Lý Danh Mục</h2>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:24px;margin:30px;">
+            <!-- Form thêm danh mục -->
+            <div class="admin-card">
+                <h3 style="margin-bottom:20px;">➕ Thêm Danh Mục Mới</h3>
+                <form action="/admin/categories/add" method="POST" class="admin-form">
+                    <div class="form-group">
+                        <label>Tên danh mục <span class="required">*</span></label>
+                        <input type="text" name="category_name" placeholder="VD: Món chính" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea name="description" rows="3" placeholder="Mô tả danh mục..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-admin-save">💾 Thêm Danh Mục</button>
+                    </div>
+                </form>
+            </div>
+            <!-- Danh sách danh mục -->
+            <div class="admin-card">
+                <h3 style="margin-bottom:20px;">📋 Danh Sách (<%= categories.length %> danh mục)</h3>
+                <% if(categories.length === 0) { %>
+                    <p style="color:#aaa;text-align:center;padding:30px;">Chưa có danh mục nào.</p>
+                <% } else { %>
+                <table class="admin-table">
+                    <thead><tr><th>#</th><th>Tên danh mục</th><th>Số món</th><th>Mô tả</th><th>Xóa</th></tr></thead>
+                    <tbody>
+                    <% categories.forEach((c, i) => { %>
+                    <tr>
+                        <td><%= i+1 %></td>
+                        <td><strong><%= c.category_name %></strong></td>
+                        <td><span class="badge-count"><%= c.dish_count %> món</span></td>
+                        <td style="color:#888;font-size:0.88rem;"><%= c.description || '—' %></td>
+                        <td>
+                            <% if(c.dish_count == 0) { %>
+                            <a href="/admin/categories/delete/<%= c.category_id %>"
+                               class="btn-action delete"
+                               onclick="return confirm('Xóa danh mục «<%= c.category_name %>»?')">🗑️</a>
+                            <% } else { %>
+                            <span style="color:#ccc;font-size:0.8rem;" title="Có món ăn, không thể xóa">🔒</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+                <% } %>
+            </div>
+        </div>
+    </main>
+</div>
+    </body>
+</html>

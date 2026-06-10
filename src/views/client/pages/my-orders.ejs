@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng Của Tôi - Cơm Quê</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+</head>
+<body>
+    <%- include('../../partials/navbar') %>
+    <div class="page-header">
+        <h1>📋 Đơn Hàng Của Tôi</h1>
+        <p>Theo dõi và quản lý đơn hàng của bạn</p>
+    </div>
+
+    <div style="max-width:900px;margin:40px auto;padding:0 20px 60px;">
+        <% if(typeof reviewed !== 'undefined' && reviewed) { %>
+            <div class="alert-success">✅ Đánh giá của bạn đã được ghi nhận!</div>
+        <% } %>
+        <% if(typeof review_error !== 'undefined' && review_error) { %>
+            <div class="alert-error">❌ Vui lòng chọn số sao hợp lệ trước khi gửi đánh giá.</div>
+        <% } %>
+
+        <% if(orders.length === 0) { %>
+            <div class="cart-empty">
+                <div class="empty-icon">📋</div>
+                <h3>Bạn chưa có đơn hàng nào</h3>
+                <a href="/thuc-don" class="btn-primary">Xem Thực Đơn</a>
+            </div>
+        <% } else { %>
+            <% orders.forEach(order => { %>
+            <div class="my-order-card" id="order-card-<%= order.order_id %>">
+                <div class="my-order-header">
+                    <div>
+                        <strong>#<%= order.order_id %></strong>
+                        <span style="color:#888;font-size:0.85rem;margin-left:10px;">
+                            <%= new Date(order.order_date).toLocaleDateString('vi-VN') %>
+                            <%= new Date(order.order_date).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}) %>
+                        </span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="status-badge status-<%= order.order_status.toLowerCase() %>" id="badge-<%= order.order_id %>">
+                            <% const labels = {Pending:'⏳ Chờ xác nhận',Preparing:'🍳 Đang chế biến',Shipping:'🚚 Đang giao',Completed:'✅ Hoàn thành',Cancelled:'❌ Đã hủy'} %>
+                            <%= labels[order.order_status] %>
+                        </span>
+                        <% if(order.order_status === 'Pending') { %>
+                        <button class="btn-cancel-order" onclick="cancelOrder(<%= order.order_id %>)">
+                            ✕ Hủy đơn
+                        </button>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="my-order-body">
+                    <% if(order.receiver_name) { %>
+                        <p style="color:#444;font-size:0.88rem;margin-bottom:4px;">👤 <strong><%= order.receiver_name %></strong> — 📞 <%= order.delivery_phone || '—' %></p>
+                    <% } %>
+                    <% if(order.delivery_address) { %>
+                        <p style="color:#555;font-size:0.88rem;margin-bottom:8px;">📍 <%= order.delivery_address.substring(0,90) %></p>
+                    <% } %>
+
+                    <!-- Danh sách món ăn -->
+                    <% if(order.items && order.items.length > 0) { %>
+                    <div class="order-items-compact">
+                        <div class="order-items-compact-head">
+                            <strong>🍱 <%= order.items.length %> món trong đơn</strong>
+                            <button type="button" class="order-items-toggle-btn" onclick="toggleOrderItems(<%= order.order_id %>)">
+                                <span id="order-toggle-text-<%= order.order_id %>">Xem chi tiết</span> <span id="order-toggle-icon-<%= order.order_id %>">⌄</span>
+                            </button>
+                        </div>
+                        <div class="order-items-list is-collapsed" id="order-items-<%= order.order_id %>">
+                            <% order.items.forEach(item => { %>
+                            <div class="order-item-row order-item-row-compact">
+                                <img src="/images/<%= item.image_url %>" onerror="this.src='/images/default-food.png'" alt="<%= item.dish_name %>">
+                                <div class="order-item-info">
+                                    <strong class="order-item-name"><%= item.dish_name %></strong>
+                                    <small class="order-item-meta">x<%= item.quantity %></small>
+                                </div>
+                                <span class="order-item-price"><%= (Number(item.price_at_time) * item.quantity).toLocaleString('vi-VN') %>₫</span>
+                            </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <% if(order.note) { %><p style="color:#999;font-size:0.83rem;margin-top:6px;">📝 <%= order.note %></p><% } %>
+                    <% if(order.payment_method) { %>
+                        <p style="color:#27ae60;font-size:0.82rem;margin-top:4px;">
+                            💳 <%= order.payment_method === 'Banking' ? 'Chuyển khoản ngân hàng' : 'Tiền mặt (COD)' %>
+                        </p>
+                    <% } %>
+                </div>
+
+                <div class="my-order-footer">
+                    <span class="total-price"><%= Number(order.total_amount).toLocaleString('vi-VN') %> ₫</span>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                        <a href="/order/<%= order.order_id %>/invoice" target="_blank" class="btn-review-toggle" style="text-decoration:none;background:#222;color:#fff;">📄 Xem hóa đơn</a>
+                        <% if(order.order_status === 'Completed') { %>
+                            <button class="btn-review-toggle" onclick="toggleReview(<%= order.order_id %>)">⭐ Đánh Giá Món Ăn</button>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Form đánh giá đơn hàng - mỗi đơn hàng chỉ đánh giá 1 lần -->
+                <% if(order.order_status === 'Completed') { %>
+                <div class="review-forms-box" id="review-<%= order.order_id %>" style="display:none;">
+                    <h4 style="margin-bottom:10px;color:#333;">⭐ Đánh giá đơn hàng #<%= order.order_id %></h4>
+                    <p style="color:#777;font-size:.9rem;margin-bottom:14px;">
+                        Đơn hàng này gồm:
+                        <% if(order.items && order.items.length > 0) { %>
+                            <%= order.items.map(i => i.dish_name + ' x' + i.quantity).join(', ') %>
+                        <% } else { %>
+                            các món đã đặt
+                        <% } %>
+                    </p>
+
+                    <div class="review-item-block">
+                        <form action="/review" method="POST" class="review-inline-form">
+                            <input type="hidden" name="order_id" value="<%= order.order_id %>">
+                            <% if(order.review) { %>
+                                <p class="reviewed-note">Bạn đã đánh giá đơn này: <strong><%= order.review.user_rating %>/5 sao</strong>. Có thể sửa và gửi lại.</p>
+                            <% } %>
+
+                            <div class="star-rating">
+                                <% for(let i=5;i>=1;i--) { %>
+                                    <input type="radio" name="rating" value="<%= i %>" required
+                                           id="s<%= i %>-order-<%= order.order_id %>"
+                                           <%= order.review && Number(order.review.user_rating) === i ? 'checked' : '' %>>
+                                    <label for="s<%= i %>-order-<%= order.order_id %>" title="<%= i %> sao">★</label>
+                                <% } %>
+                            </div>
+
+                            <textarea name="comment" rows="3" placeholder="Nhận xét về đơn hàng này..."><%= order.review ? (order.review.user_comment || '') : '' %></textarea>
+                            <button type="submit" class="btn-submit-review"><%= order.review ? 'Cập nhật đánh giá' : 'Gửi đánh giá' %></button>
+                        </form>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+            <% }) %>
+        <% } %>
+    </div>
+
+    <!-- Toast thông báo -->
+    <div class="toast" id="toast"></div>
+
+    <%- include('../../partials/footer') %>
+    <script>
+    function toggleReview(id) {
+        const box = document.getElementById('review-' + id);
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleOrderItems(id) {
+        const list = document.getElementById('order-items-' + id);
+        const text = document.getElementById('order-toggle-text-' + id);
+        const icon = document.getElementById('order-toggle-icon-' + id);
+        if (!list) return;
+        const collapsed = list.classList.toggle('is-collapsed');
+        if (text) text.textContent = collapsed ? 'Xem chi tiết' : 'Thu gọn';
+        if (icon) icon.textContent = collapsed ? '⌄' : '⌃';
+    }
+
+    function cancelOrder(orderId) {
+        if (!confirm('Bạn có chắc muốn hủy đơn hàng #' + orderId + '?')) return;
+        fetch('/order/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const badge = document.getElementById('badge-' + orderId);
+                badge.textContent = '❌ Đã hủy';
+                badge.className = 'status-badge status-cancelled';
+                const btn = badge.parentElement.querySelector('.btn-cancel-order');
+                if (btn) btn.remove();
+                showToast('Đã hủy đơn hàng #' + orderId);
+            } else {
+                showToast(data.message || 'Không thể hủy đơn', true);
+            }
+        });
+    }
+
+    function showToast(msg, isError = false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = isError ? '#e74c3c' : '#2ecc71';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Auto show reviewed toast
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reviewed')) showToast('✅ Đánh giá đã được gửi thành công!');
+    if (urlParams.get('review_error')) showToast('❌ Vui lòng chọn số sao hợp lệ!', true);
+    </script>
+</body>
+</html>

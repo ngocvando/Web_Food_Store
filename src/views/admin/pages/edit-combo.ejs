@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa combo - Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/comque-design.css">
+    <style>
+        .admin-layout{display:flex;min-height:100vh;background:#f6f7fb}
+        .admin-main{flex:1;padding:28px}
+        .admin-card{background:#fff;border-radius:14px;padding:22px;box-shadow:0 8px 20px rgba(0,0,0,.06);margin-bottom:20px}
+        input,textarea,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px}
+        .btn-primary{background:#E8192C;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+        .btn-outline{background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px 14px;cursor:pointer;text-decoration:none;color:#333}
+        .btn-remove{background:#fff0f0;color:#c62828;border:1px solid #ffc9c9;border-radius:8px;padding:8px 10px;cursor:pointer}
+        .row{display:grid;grid-template-columns:2fr 100px 44px;gap:8px;align-items:center}
+        .note{color:#666;font-size:.95rem;line-height:1.5}
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <%- include('../../partials/admin-sidebar', { page: 'combos' }) %>
+    <main class="admin-main">
+        <div class="admin-card">
+            <h1>✏️ Sửa combo</h1>
+            <p class="note">
+                Việc sửa combo chỉ áp dụng cho các đơn hàng phát sinh sau thời điểm cập nhật.
+                Các đơn hàng cũ vẫn giữ nguyên giá và tên sản phẩm tại thời điểm đặt hàng.
+            </p>
+            <form action="/admin/combos/edit/<%= combo.combo_id %>" method="POST" enctype="multipart/form-data" style="display:grid;gap:14px;margin-top:16px;">
+                <div>
+                    <label>Tên combo</label>
+                    <input type="text" name="combo_name" value="<%= combo.combo_name %>" required>
+                </div>
+                <div>
+                    <label>Mô tả</label>
+                    <textarea name="description" rows="2"><%= combo.description || '' %></textarea>
+                </div>
+                <div>
+                    <label>Giá bán combo</label>
+                    <input type="number" name="discount_price" min="0" value="<%= Number(combo.discount_price || 0) %>" required>
+                </div>
+                <div>
+                    <label>Ảnh combo mới (không chọn nếu giữ ảnh cũ)</label>
+                    <input type="file" name="image" accept="image/*">
+                    <small>Ảnh hiện tại: <%= combo.image_url || 'default-food.png' %></small>
+                </div>
+                <label style="display:flex;gap:8px;align-items:center;">
+                    <input type="checkbox" name="is_available" value="1" style="width:auto;" <%= combo.is_available ? 'checked' : '' %>>
+                    Đang bán
+                </label>
+
+                <div>
+                    <label>Chọn món trong combo</label>
+                    <div id="comboItems" style="display:grid;gap:10px;">
+                        <% const currentItems = items && items.length ? items : [{dish_id:'', quantity:1}]; %>
+                        <% currentItems.forEach(it => { %>
+                            <div class="row">
+                                <select name="dish_ids" required>
+                                    <% dishes.forEach(d => { %>
+                                        <option value="<%= d.dish_id %>" <%= Number(d.dish_id) === Number(it.dish_id) ? 'selected' : '' %>>
+                                            <%= d.dish_name %> - <%= Number(d.price).toLocaleString('vi-VN') %> ₫
+                                        </option>
+                                    <% }) %>
+                                </select>
+                                <input type="number" name="quantities" value="<%= it.quantity || 1 %>" min="1" required>
+                                <button type="button" onclick="removeComboRow(this)" class="btn-remove">✕</button>
+                            </div>
+                        <% }) %>
+                    </div>
+                    <button type="button" onclick="addComboRow()" class="btn-outline" style="margin-top:10px;">+ Thêm món vào combo</button>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                    <a href="/admin/combos" class="btn-outline">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+<script>
+const dishOptions = `<% dishes.forEach(d => { %><option value="<%= d.dish_id %>"><%= d.dish_name %> - <%= Number(d.price).toLocaleString('vi-VN') %> ₫</option><% }) %>`;
+function addComboRow() {
+    const wrap = document.getElementById('comboItems');
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<select name="dish_ids" required>${dishOptions}</select><input type="number" name="quantities" value="1" min="1" required><button type="button" onclick="removeComboRow(this)" class="btn-remove">✕</button>`;
+    wrap.appendChild(row);
+}
+function removeComboRow(btn) {
+    const wrap = document.getElementById('comboItems');
+    if (wrap.children.length > 1) btn.closest('.row').remove();
+}
+</script>
+</body>
+</html>
